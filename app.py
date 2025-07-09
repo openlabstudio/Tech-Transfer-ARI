@@ -9,10 +9,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# Logo centrado
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.image("assets/logo-openlab-verde.png", width=300)
+# Logo alineado a la izquierda
+st.image("assets/logo-openlab-verde.png", width=300)
 
 st.markdown("---")
 
