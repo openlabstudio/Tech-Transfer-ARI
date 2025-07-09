@@ -26,13 +26,13 @@ def get_api_keys():
                 pass
         
         if not openai_key or not tavily_key:
-            st.error("Error: Claves API no encontradas")
-            st.error("Por favor, configura las claves OPENAI_API_KEY y TAVILY_API_KEY en los secrets de Replit")
-            raise ValueError("Claves API no encontradas")
+            st.error("Error: API keys not found")
+            st.error("Please configure OPENAI_API_KEY and TAVILY_API_KEY in Replit secrets")
+            raise ValueError("API keys not found")
             
         return openai_key, tavily_key
     except Exception as e:
-        st.error(f"Error al obtener las claves API: {str(e)}")
+        st.error(f"Error getting API keys: {str(e)}")
         raise
 
 def extraer_texto_de_pdf(fichero_subido):
@@ -56,12 +56,12 @@ def extraer_texto_de_pdf(fichero_subido):
         
         # Verificar que se extrajo texto
         if not texto_completo.strip():
-            raise ValueError("No se pudo extraer texto del PDF. El archivo podría contener solo imágenes o estar corrupto.")
+            raise ValueError("Could not extract text from PDF. The file might contain only images or be corrupted.")
             
         return texto_completo.strip()
         
     except Exception as e:
-        raise Exception(f"Error al extraer texto del PDF: {str(e)}")
+        raise Exception(f"Error extracting text from PDF: {str(e)}")
 
 def crear_herramienta_busqueda(tavily_key):
     """Crea la herramienta de búsqueda web usando Tavily"""
@@ -92,11 +92,11 @@ def crear_herramienta_busqueda(tavily_key):
             return json.dumps(resultados, indent=2)
             
         except Exception as e:
-            return f"Error en la búsqueda: {str(e)}"
+            return f"Search error: {str(e)}"
     
     return Tool(
         name="busqueda_web",
-        description="Busca información actual en internet sobre tecnologías, mercados, competidores y tendencias",
+        description="Search current information on internet about technologies, markets, competitors and trends",
         func=buscar_web
     )
 
@@ -124,48 +124,48 @@ def generar_informe_completo(texto_paper):
         )
         
         # PASO 1: Análisis interno del paper
-        st.write("🔍 Paso 1/4: Analizando el contenido del paper...")
+        st.write("🔍 Step 1/4: Analyzing paper content...")
         
         prompt_analisis = f"""
-        Eres un experto en análisis de investigación científica. Analiza el siguiente paper y extrae:
+        You are an expert in scientific research analysis. Analyze the following paper and extract:
         
-        1. La tecnología o solución principal
-        2. El problema específico que aborda
-        3. La metodología utilizada
-        4. El potencial innovador y disruptivo
-        5. Palabras clave técnicas relevantes
+        1. The main technology or solution
+        2. The specific problem it addresses
+        3. The methodology used
+        4. The innovative and disruptive potential
+        5. Relevant technical keywords
         
-        Paper a analizar:
+        Paper to analyze:
         {texto_paper}
         
-        Proporciona un análisis estructurado y conciso.
+        Provide a structured and concise analysis in English.
         """
         
         response_analisis = llm.invoke([HumanMessage(content=prompt_analisis)])
         analisis_interno = response_analisis.content
         
         # PASO 2: Búsqueda de tendencias y tecnologías relacionadas
-        st.write("🌐 Paso 2/4: Investigando tendencias de mercado...")
+        st.write("🌐 Step 2/4: Researching market trends...")
         
         # Crear herramienta de búsqueda
         herramienta_busqueda = crear_herramienta_busqueda(tavily_key)
         
         # Crear agente para búsqueda de tendencias
         prompt_tendencias = ChatPromptTemplate.from_messages([
-            ("system", """Eres un analista de mercado especializado en tecnología. 
-            Basándote en el análisis del paper, genera 3-4 consultas de búsqueda específicas para encontrar:
-            1. Tendencias actuales del mercado relacionadas con la tecnología (incluye tamaño de mercado, crecimiento, proyecciones)
-            2. Datos de mercado específicos (ingresos, inversiones, valoraciones, número de empresas)
-            3. Tecnologías emergentes en el mismo campo
-            4. Aplicaciones comerciales actuales y casos de uso
+            ("system", """You are a technology market analyst. 
+            Based on the paper analysis, generate 3-4 specific search queries to find:
+            1. Current market trends related to the technology (include market size, growth, projections)
+            2. Specific market data (revenue, investments, valuations, number of companies)
+            3. Emerging technologies in the same field
+            4. Current commercial applications and use cases
             
-            Usa la herramienta de búsqueda web para investigar. En tu respuesta final, INCLUYE SIEMPRE:
-            - Enlaces clickables a las fuentes: [Título de la fuente](URL)
-            - Datos numéricos específicos cuando estén disponibles
-            - Fechas de publicación de la información
-            - Proporciona un resumen consolidado estructurado."""),
+            Use the web search tool to investigate. In your final response, ALWAYS INCLUDE:
+            - Clickable links to sources: [Source Title](URL)
+            - Specific numerical data when available
+            - Publication dates of information
+            - Provide a structured consolidated summary in English."""),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ("human", "Análisis del paper: {analisis}\n\nRealiza búsquedas para encontrar tendencias de mercado relevantes con datos específicos y fuentes.")
+            ("human", "Paper analysis: {analisis}\n\nSearch for relevant market trends with specific data and sources.")
         ])
         
         agente_tendencias = create_openai_functions_agent(
@@ -185,23 +185,23 @@ def generar_informe_completo(texto_paper):
         })
         
         # PASO 3: Búsqueda de panorama competitivo
-        st.write("🏢 Paso 3/4: Analizando el panorama competitivo...")
+        st.write("🏢 Step 3/4: Analyzing competitive landscape...")
         
         prompt_competitivo = ChatPromptTemplate.from_messages([
-            ("system", """Eres un analista de inteligencia competitiva. 
-            Basándote en el análisis del paper, genera 3-4 consultas de búsqueda para encontrar:
-            1. Empresas y startups que trabajen en tecnologías similares (incluye datos de financiación, valoración, empleados si está disponible)
-            2. Centros de investigación y universidades en el mismo campo (incluye publicaciones recientes, financiación)
-            3. Posibles socios estratégicos o competidores directos
-            4. Patentes o propiedad intelectual relacionada
+            ("system", """You are a competitive intelligence analyst. 
+            Based on the paper analysis, generate 3-4 search queries to find:
+            1. Companies and startups working on similar technologies (include funding data, valuation, employees if available)
+            2. Research centers and universities in the same field (include recent publications, funding)
+            3. Potential strategic partners or direct competitors
+            4. Related patents or intellectual property
             
-            Usa la herramienta de búsqueda web. En tu respuesta final, INCLUYE SIEMPRE:
-            - Enlaces clickables a las fuentes: [Nombre de la empresa/institución](URL)
-            - Datos específicos sobre financiación, tamaño, ubicación cuando estén disponibles
-            - Fechas de información relevante
-            - Proporciona un análisis estructurado."""),
+            Use the web search tool. In your final response, ALWAYS INCLUDE:
+            - Clickable links to sources: [Company/Institution Name](URL)
+            - Specific data about funding, size, location when available
+            - Relevant information dates
+            - Provide a structured analysis in English."""),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ("human", "Análisis del paper: {analisis}\n\nBusca información detallada sobre el panorama competitivo con datos específicos y fuentes.")
+            ("human", "Paper analysis: {analisis}\n\nSearch for detailed information about the competitive landscape with specific data and sources.")
         ])
         
         agente_competitivo = create_openai_functions_agent(
@@ -221,83 +221,84 @@ def generar_informe_completo(texto_paper):
         })
         
         # PASO 4: Síntesis y recomendaciones de TRL
-        st.write("📊 Paso 4/4: Generando recomendaciones de TRL...")
+        st.write("📊 Step 4/4: Generating TRL recommendations...")
         
         prompt_final = f"""
-        Eres un consultor experto en transferencia tecnológica. Basándote en toda la información recopilada, 
-        genera un informe completo siguiendo EXACTAMENTE esta estructura Markdown:
+        You are an expert technology transfer consultant. Based on all the information collected, 
+        generate a comprehensive report following EXACTLY this Markdown structure:
 
-        # Informe de Potencial de Transferencia Tecnológica
+        # Technology Transfer Potential Report
 
-        ## 1. Análisis del Proyecto de Investigación
+        ## 1. Research Project Analysis
 
-        **Tecnología/Solución Principal:**
-        * [Resumen de la tecnología clave identificada en el paper]
+        **Main Technology/Solution:**
+        * [Summary of the key technology identified in the paper]
 
-        **Problema Abordado:**
-        * [Descripción del problema que la investigación busca resolver]
+        **Problem Addressed:**
+        * [Description of the problem the research aims to solve]
 
-        **Potencial Innovador Intrínseco:**
-        * [Análisis sobre la novedad y el carácter disruptivo de la propuesta]
-
-        ---
-
-        ## 2. Contexto de Mercado y Tendencias Actuales
-
-        **Tendencias de Mercado Relevantes:**
-        * [Lista de tendencias de mercado identificadas CON DATOS ESPECÍFICOS como tamaño de mercado, tasas de crecimiento, proyecciones]
-        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
-
-        **Datos de Mercado Específicos:**
-        * [Cifras concretas sobre el tamaño del mercado, inversiones, número de empresas, etc.]
-        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
-
-        **Tecnologías Relacionadas y Emergentes:**
-        * [Lista de otras tecnologías complementarias o en evolución]
-        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
+        **Intrinsic Innovation Potential:**
+        * [Analysis of the novelty and disruptive nature of the proposal]
 
         ---
 
-        ## 3. Panorama Competitivo y Posibles Colaboradores
+        ## 2. Market Context and Current Trends
 
-        **Actores Clave en el Mercado (Empresas/Startups):**
-        * [Lista de posibles competidores con datos específicos: financiación, valoración, empleados, ubicación]
-        * [INCLUIR enlaces clickables: [Nombre de la empresa](URL)]
+        **Relevant Market Trends:**
+        * [List of identified market trends WITH SPECIFIC DATA such as market size, growth rates, projections]
+        * [INCLUDE clickable links to sources: [Title](URL)]
 
-        **Centros de Investigación y Posibles Socios Académicos:**
-        * [Lista de universidades/centros con datos sobre publicaciones recientes, financiación, proyectos]
-        * [INCLUIR enlaces clickables: [Nombre del centro](URL)]
+        **Specific Market Data:**
+        * [Concrete figures on market size, investments, number of companies, etc.]
+        * [INCLUDE clickable links to sources: [Title](URL)]
 
-        **Análisis de Propiedad Intelectual:**
-        * [Información sobre patentes relevantes si se encontró]
-        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
-
-        ---
-
-        ## 4. Hoja de Ruta Sugerida para Aumentar el TRL
-
-        **Análisis de Madurez Actual (TRL Estimado):**
-        * Basado en la descripción, el nivel de madurez tecnológica (TRL) actual se estima en **TRL [X]**.
-        * Justificación: [Breve explicación sobre por qué estimas ese TRL].
-
-        **Siguientes Pasos Accionables:**
-        1. **Para alcanzar TRL [X+1]:** [Sugerencia concreta]
-        2. **Para alcanzar TRL [X+2]:** [Sugerencia concreta]
-        3. **Preguntas Clave a Resolver:** [Lista de preguntas que el investigador debería responder para avanzar]
+        **Related and Emerging Technologies:**
+        * [List of other complementary or evolving technologies]
+        * [INCLUDE clickable links to sources: [Title](URL)]
 
         ---
 
-        ## 5. Fuentes y Referencias
+        ## 3. Competitive Landscape and Potential Collaborators
 
-        **Fuentes Consultadas:**
-        * [Lista completa de todas las fuentes con enlaces clickables utilizadas en el análisis]
-        * [Incluir fecha de consulta cuando sea posible]
+        **Key Market Players (Companies/Startups):**
+        * [List of potential competitors with specific data: funding, valuation, employees, location]
+        * [INCLUDE clickable links: [Company Name](URL)]
 
-        INSTRUCCIONES IMPORTANTES:
-        - SIEMPRE incluir enlaces clickables en formato [Texto](URL) 
-        - Priorizar datos numéricos específicos cuando estén disponibles
-        - Incluir fechas de publicación de la información
-        - Verificar que todos los enlaces funcionen correctamente
+        **Research Centers and Potential Academic Partners:**
+        * [List of universities/centers with data on recent publications, funding, projects]
+        * [INCLUDE clickable links: [Center Name](URL)]
+
+        **Intellectual Property Analysis:**
+        * [Information about relevant patents if found]
+        * [INCLUDE clickable links to sources: [Title](URL)]
+
+        ---
+
+        ## 4. Suggested Roadmap to Increase TRL
+
+        **Current Maturity Analysis (Estimated TRL):**
+        * Based on the description, the current Technology Readiness Level (TRL) is estimated at **TRL [X]**.
+        * Justification: [Brief explanation of why you estimate that TRL].
+
+        **Actionable Next Steps:**
+        1. **To reach TRL [X+1]:** [Concrete suggestion]
+        2. **To reach TRL [X+2]:** [Concrete suggestion]
+        3. **Key Questions to Resolve:** [List of questions the researcher should answer to advance]
+
+        ---
+
+        ## 5. Sources and References
+
+        **Consulted Sources:**
+        * [Complete list of all sources with clickable links used in the analysis]
+        * [Include consultation date when possible]
+
+        IMPORTANT INSTRUCTIONS:
+        - ALWAYS include clickable links in format [Text](URL) 
+        - Prioritize specific numerical data when available
+        - Include publication dates of information
+        - Verify that all links work correctly
+        - Write the entire report in English
 
         INFORMACIÓN PARA EL ANÁLISIS:
 
