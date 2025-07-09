@@ -9,16 +9,30 @@ from langchain.schema import HumanMessage, AIMessage
 from tavily import TavilyClient
 import json
 
-# Configuración de APIs usando secrets de Streamlit
+# Configuración de APIs usando variables de entorno
 def get_api_keys():
-    """Obtiene las claves API desde los secrets de Streamlit"""
+    """Obtiene las claves API desde las variables de entorno"""
     try:
-        openai_key = st.secrets["OPENAI_API_KEY"]
-        tavily_key = st.secrets["TAVILY_API_KEY"]
+        # Intentar primero desde variables de entorno (Replit Secrets)
+        openai_key = os.getenv("OPENAI_API_KEY")
+        tavily_key = os.getenv("TAVILY_API_KEY")
+        
+        # Si no están en variables de entorno, intentar desde Streamlit secrets
+        if not openai_key or not tavily_key:
+            try:
+                openai_key = openai_key or st.secrets["OPENAI_API_KEY"]
+                tavily_key = tavily_key or st.secrets["TAVILY_API_KEY"]
+            except:
+                pass
+        
+        if not openai_key or not tavily_key:
+            st.error("Error: Claves API no encontradas")
+            st.error("Por favor, configura las claves OPENAI_API_KEY y TAVILY_API_KEY en los secrets de Replit")
+            raise ValueError("Claves API no encontradas")
+            
         return openai_key, tavily_key
-    except KeyError as e:
-        st.error(f"Error: Clave API no encontrada en secrets: {e}")
-        st.error("Por favor, configura las claves OPENAI_API_KEY y TAVILY_API_KEY en los secrets de Streamlit")
+    except Exception as e:
+        st.error(f"Error al obtener las claves API: {str(e)}")
         raise
 
 def extraer_texto_de_pdf(fichero_subido):
