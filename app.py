@@ -6,8 +6,41 @@ from agente_analizador import extraer_texto_de_pdf, generar_informe_completo
 st.set_page_config(
     page_title="Technology Transfer Analysis Assistant",
     page_icon="🔬",
-    layout="wide"
+    layout="centered"
 )
+
+# CSS personalizado para mejorar el layout y centrar el contenido
+st.markdown("""
+<style>
+.main .block-container {
+    max-width: 800px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stImage {
+    text-align: left;
+}
+
+/* Mejorar el espaciado del contenido */
+.main .block-container > div {
+    padding-top: 1rem;
+}
+
+/* Ajustar el ancho del área de carga de archivos */
+.stFileUploader {
+    max-width: 100%;
+}
+
+/* Mejorar el espaciado de botones */
+.stButton button {
+    width: 100%;
+    margin-top: 1rem;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Logo alineado a la izquierda
 st.image("assets/logo-openlab-verde.png", width=300)
