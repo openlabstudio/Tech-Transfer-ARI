@@ -1,0 +1,112 @@
+# CONTEXTO GENERAL Y OBJETIVO DEL PROYECTO
+Rol del Usuario: Eres mi socio estratégico en Openlab. No soy un programador profesional, pero me siento cómodo creando código con tu ayuda. Necesito que me guíes paso a paso para construir un prototipo funcional.
+Cliente Final: AR+I (Andorra Recerca + Innovació), una fundación de investigación e innovación.
+Usuario Final de la App: Investigadores de AR+I, que no son expertos en negocio ni en análisis de mercado. La herramienta debe ser extremadamente intuitiva.
+Objetivo Estratégico de la App: Crear una herramienta de "Asistente de Análisis para Transferencia Tecnológica". El objetivo es que un investigador pueda subir un paper científico o un resumen de su proyecto y recibir un informe automatizado que le ayude a entender el potencial de mercado de su investigación y los siguientes pasos para aumentar su TRL (Technology Readiness Level). La app debe servir como un catalizador para cerrar la brecha entre la investigación pura y la innovación aplicable.
+# ROL Y TAREA PRINCIPAL
+Actúa como un desarrollador de software experto Full-Stack, especializado en la creación de prototipos rápidos de aplicaciones de IA con Python. Tu tarea es proporcionarme el código completo y las instrucciones detalladas para construir y desplegar esta aplicación. Vamos a construirla paso a paso, fichero por fichero.
+# ESPECIFICACIONES TÉCNICAS DETALLADAS
+## 1. Stack Tecnológico Propuesto
+Interfaz (Frontend): Streamlit
+Lógica (Backend): Python con la librería LangChain
+Búsqueda Web: Tavily
+Modelo de Lenguaje (LLM): GPT-4o (o el modelo más avanzado disponible a través de la API de OpenAI)
+Despliegue (Hosting): Streamlit Community Cloud
+## 2. Estructura de Ficheros del Proyecto El proyecto deberá tener la siguiente estructura de ficheros en una única carpeta:
+/proyecto_ari/
+|-- app.py # Fichero principal con el código de la interfaz de Streamlit 
+|-- agente_analizador.py # Módulo con toda la lógica del agente de IA 
+|-- requirements.txt # Fichero con las dependencias de Python
+
+## 3. Fichero requirements.txt Este fichero debe contener todas las librerías necesarias.
+
+streamlit 
+langchain 
+langchain-openai 
+tavily-python 
+pypdf2 
+python-dotenv
+
+## 4. Gestión de API Keys El código no debe contener las API keys directamente. Debes instruirme para que utilice el sistema de secrets de Streamlit (st.secrets). El código debe buscar las claves con st.secrets["OPENAI_API_KEY"] y st.secrets["TAVILY_API_KEY"].
+## 5. Fichero app.py (Interfaz de Usuario con Streamlit) Este fichero controlará la interfaz que ve el usuario.
+Título: "Asistente de Análisis para Transferencia Tecnológica".
+Componente de Carga: Debe haber un componente st.file_uploader que permita al usuario arrastrar y soltar un único fichero PDF.
+Botón de Acción: Un botón st.button con el texto "Generar Informe". El botón debe estar deshabilitado hasta que no se haya subido un fichero.
+Lógica de Ejecución:
+Al pulsar el botón "Generar Informe", la aplicación debe mostrar un st.spinner con el mensaje "Analizando documento y consultando el mercado... Este proceso puede tardar unos minutos.".
+Debe llamar a las funciones necesarias del módulo agente_analizador.py para procesar el PDF y generar el informe.
+Una vez generado el informe, el spinner debe desaparecer y el informe completo debe mostrarse en la página usando st.markdown() para un formato enriquecido.
+Debe incluir manejo de errores básico (ej. si el PDF no se puede leer).
+## 6. Fichero agente_analizador.py (Lógica del Agente) Este módulo contendrá la lógica principal. Se compondrá de dos funciones clave:
+Función 1: extraer_texto_de_pdf(fichero_subido)
+Input: El objeto de fichero que viene de st.file_uploader.
+Proceso: Utiliza la librería PyPDF2 para leer el fichero PDF y extraer todo su contenido de texto.
+Output: Una única cadena de texto (string) con el contenido completo del paper.
+Función 2: generar_informe_completo(texto_paper)
+Input: La cadena de texto generada por la función anterior.
+Proceso: Esta es la función principal que orquesta el "Agentic Workflow" usando LangChain. Realizará 4 tareas secuenciales:
+Análisis Interno del Paper: Realiza una llamada a un LLM (GPT-4o) con el texto_paper para extraer y resumir los conceptos clave: la tecnología principal, la metodología, el problema que resuelve y la solución propuesta.
+Búsqueda de Tendencias y Tecnologías Relacionadas: Utiliza un agente de LangChain equipado con la herramienta de búsqueda Tavily. Las queries de búsqueda deben ser generadas por el LLM a partir de los conceptos clave extraídos en el paso anterior.
+Búsqueda de Panorama Competitivo y Colaboradores: Utiliza de nuevo el agente con Tavily para buscar startups, empresas, y centros de investigación que trabajen en campos similares. Debe identificar tanto competidores directos como posibles socios estratégicos.
+Síntesis y Recomendaciones de TRL: Realiza una llamada final al LLM. En esta llamada, le proporcionarás como contexto:
+El texto_paper original.
+El resumen del análisis interno (Paso 1).
+El resumen de tendencias (Paso 2).
+La lista de competidores/colaboradores (Paso 3). El prompt final le pedirá que, con toda esa información, genere el informe estructurado final.
+Output: Una única cadena de texto en formato Markdown que contenga el informe completo y estructurado.
+## 7. Estructura del Informe Final (Output en Markdown) El informe que genere la Función 2 debe seguir estrictamente esta estructura Markdown para asegurar la claridad para el investigador:
+# Informe de Potencial de Transferencia Tecnológica
+
+## 1. Análisis del Proyecto de Investigación
+
+**Tecnología/Solución Principal:**
+* [Resumen de la tecnología clave identificada en el paper]
+
+**Problema Abordado:**
+* [Descripción del problema que la investigación busca resolver]
+
+**Potencial Innovador Intrínseco:**
+* [Análisis del LLM sobre la novedad y el carácter disruptivo de la propuesta]
+
+---
+
+## 2. Contexto de Mercado y Tendencias Actuales
+
+**Tendencias de Mercado Relevantes:**
+* [Lista de tendencias de mercado identificadas por Tavily]
+
+**Tecnologías Relacionadas y Emergentes:**
+* [Lista de otras tecnologías complementarias o en evolución]
+
+---
+
+## 3. Panorama Competitivo y Posibles Colaboradores
+
+**Actores Clave en el Mercado (Empresas/Startups):**
+* [Lista de posibles competidores con una breve descripción]
+
+**Centros de Investigación y Posibles Socios Académicos:**
+* [Lista de otras universidades o centros que investigan en la misma línea]
+
+---
+
+## 4. Hoja de Ruta Sugerida para Aumentar el TRL
+
+**Análisis de Madurez Actual (TRL Estimado):**
+* Basado en la descripción, el nivel de madurez tecnológica (TRL) actual se estima en **TRL [X]**.
+* Justificación: [Breve explicación del LLM sobre por qué estima ese TRL].
+
+**Siguientes Pasos Accionables:**
+1.  **Para alcanzar TRL [X+1]:** [Sugerencia concreta, ej: "Desarrollar una prueba de concepto en un entorno de laboratorio controlado para validar el algoritmo principal."]
+2.  **Para alcanzar TRL [X+2]:** [Sugerencia concreta, ej: "Identificar un socio industrial para validar la tecnología en un entorno relevante."]
+3.  **Preguntas Clave a Resolver:** [Lista de preguntas que el investigador debería responder para avanzar, ej: "¿Cuál es el coste estimado de producción a escala?"]
+
+
+# INSTRUCCIONES FINALES PARA LA INTERACCIÓN
+Quiero que me guíes paso a paso en la creación de estos ficheros.
+Comienza dándome el contenido completo para el fichero requirements.txt.
+Luego, dame el código inicial y esquelético para app.py, solo con la interfaz de usuario.
+Después, nos centraremos en agente_analizador.py, construyendo las funciones una por una.
+Finalmente, integraremos todo en app.py.
+Explica cada bloque de código que me proporciones y el porqué de cada decisión técnica.
+Espera mi confirmación después de cada paso antes de proceder al siguiente. ¿Estás listo para empezar?
