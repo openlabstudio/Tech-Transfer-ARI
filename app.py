@@ -48,7 +48,7 @@ st.image("assets/logo-openlab-verde.png", width=300)
 st.markdown("---")
 
 # Título principal
-st.title("Technology Transfer Analysis Assistant")
+st.title("Tech Transfer Analyst")
 st.markdown("---")
 
 # Descripción de la aplicación
