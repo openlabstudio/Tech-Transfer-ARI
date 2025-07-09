@@ -73,17 +73,20 @@ def crear_herramienta_busqueda(tavily_key):
             response = client.search(
                 query=query,
                 search_depth="advanced",
-                max_results=5,
-                include_domains=["scholar.google.com", "arxiv.org", "ieee.org", "nature.com", "science.org"]
+                max_results=8,
+                include_domains=["scholar.google.com", "arxiv.org", "ieee.org", "nature.com", "science.org", "reuters.com", "bloomberg.com", "techcrunch.com", "venturebeat.com", "crunchbase.com"]
             )
             
-            # Formatear resultados
+            # Formatear resultados con más detalles
             resultados = []
             for result in response.get('results', []):
                 resultados.append({
                     'title': result.get('title', ''),
                     'url': result.get('url', ''),
-                    'content': result.get('content', '')[:500] + '...' if len(result.get('content', '')) > 500 else result.get('content', '')
+                    'content': result.get('content', ''),
+                    'score': result.get('score', 0),
+                    'published_date': result.get('published_date', ''),
+                    'domain': result.get('url', '').split('/')[2] if result.get('url') else ''
                 })
             
             return json.dumps(resultados, indent=2)
@@ -150,14 +153,19 @@ def generar_informe_completo(texto_paper):
         # Crear agente para búsqueda de tendencias
         prompt_tendencias = ChatPromptTemplate.from_messages([
             ("system", """Eres un analista de mercado especializado en tecnología. 
-            Basándote en el análisis del paper, genera 2-3 consultas de búsqueda específicas para encontrar:
-            1. Tendencias actuales del mercado relacionadas con la tecnología
-            2. Tecnologías emergentes en el mismo campo
-            3. Aplicaciones comerciales actuales
+            Basándote en el análisis del paper, genera 3-4 consultas de búsqueda específicas para encontrar:
+            1. Tendencias actuales del mercado relacionadas con la tecnología (incluye tamaño de mercado, crecimiento, proyecciones)
+            2. Datos de mercado específicos (ingresos, inversiones, valoraciones, número de empresas)
+            3. Tecnologías emergentes en el mismo campo
+            4. Aplicaciones comerciales actuales y casos de uso
             
-            Usa la herramienta de búsqueda web para investigar y proporciona un resumen consolidado."""),
+            Usa la herramienta de búsqueda web para investigar. En tu respuesta final, INCLUYE SIEMPRE:
+            - Enlaces clickables a las fuentes: [Título de la fuente](URL)
+            - Datos numéricos específicos cuando estén disponibles
+            - Fechas de publicación de la información
+            - Proporciona un resumen consolidado estructurado."""),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ("human", "Análisis del paper: {analisis}\n\nRealiza búsquedas para encontrar tendencias de mercado relevantes.")
+            ("human", "Análisis del paper: {analisis}\n\nRealiza búsquedas para encontrar tendencias de mercado relevantes con datos específicos y fuentes.")
         ])
         
         agente_tendencias = create_openai_functions_agent(
@@ -181,14 +189,19 @@ def generar_informe_completo(texto_paper):
         
         prompt_competitivo = ChatPromptTemplate.from_messages([
             ("system", """Eres un analista de inteligencia competitiva. 
-            Basándote en el análisis del paper, genera 2-3 consultas de búsqueda para encontrar:
-            1. Empresas y startups que trabajen en tecnologías similares
-            2. Centros de investigación y universidades en el mismo campo
+            Basándote en el análisis del paper, genera 3-4 consultas de búsqueda para encontrar:
+            1. Empresas y startups que trabajen en tecnologías similares (incluye datos de financiación, valoración, empleados si está disponible)
+            2. Centros de investigación y universidades en el mismo campo (incluye publicaciones recientes, financiación)
             3. Posibles socios estratégicos o competidores directos
+            4. Patentes o propiedad intelectual relacionada
             
-            Usa la herramienta de búsqueda web y proporciona un análisis estructurado."""),
+            Usa la herramienta de búsqueda web. En tu respuesta final, INCLUYE SIEMPRE:
+            - Enlaces clickables a las fuentes: [Nombre de la empresa/institución](URL)
+            - Datos específicos sobre financiación, tamaño, ubicación cuando estén disponibles
+            - Fechas de información relevante
+            - Proporciona un análisis estructurado."""),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ("human", "Análisis del paper: {analisis}\n\nBusca información sobre el panorama competitivo.")
+            ("human", "Análisis del paper: {analisis}\n\nBusca información detallada sobre el panorama competitivo con datos específicos y fuentes.")
         ])
         
         agente_competitivo = create_openai_functions_agent(
@@ -232,20 +245,32 @@ def generar_informe_completo(texto_paper):
         ## 2. Contexto de Mercado y Tendencias Actuales
 
         **Tendencias de Mercado Relevantes:**
-        * [Lista de tendencias de mercado identificadas]
+        * [Lista de tendencias de mercado identificadas CON DATOS ESPECÍFICOS como tamaño de mercado, tasas de crecimiento, proyecciones]
+        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
+
+        **Datos de Mercado Específicos:**
+        * [Cifras concretas sobre el tamaño del mercado, inversiones, número de empresas, etc.]
+        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
 
         **Tecnologías Relacionadas y Emergentes:**
         * [Lista de otras tecnologías complementarias o en evolución]
+        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
 
         ---
 
         ## 3. Panorama Competitivo y Posibles Colaboradores
 
         **Actores Clave en el Mercado (Empresas/Startups):**
-        * [Lista de posibles competidores con una breve descripción]
+        * [Lista de posibles competidores con datos específicos: financiación, valoración, empleados, ubicación]
+        * [INCLUIR enlaces clickables: [Nombre de la empresa](URL)]
 
         **Centros de Investigación y Posibles Socios Académicos:**
-        * [Lista de otras universidades o centros que investigan en la misma línea]
+        * [Lista de universidades/centros con datos sobre publicaciones recientes, financiación, proyectos]
+        * [INCLUIR enlaces clickables: [Nombre del centro](URL)]
+
+        **Análisis de Propiedad Intelectual:**
+        * [Información sobre patentes relevantes si se encontró]
+        * [INCLUIR enlaces clickables a las fuentes: [Título](URL)]
 
         ---
 
@@ -259,6 +284,20 @@ def generar_informe_completo(texto_paper):
         1. **Para alcanzar TRL [X+1]:** [Sugerencia concreta]
         2. **Para alcanzar TRL [X+2]:** [Sugerencia concreta]
         3. **Preguntas Clave a Resolver:** [Lista de preguntas que el investigador debería responder para avanzar]
+
+        ---
+
+        ## 5. Fuentes y Referencias
+
+        **Fuentes Consultadas:**
+        * [Lista completa de todas las fuentes con enlaces clickables utilizadas en el análisis]
+        * [Incluir fecha de consulta cuando sea posible]
+
+        INSTRUCCIONES IMPORTANTES:
+        - SIEMPRE incluir enlaces clickables en formato [Texto](URL) 
+        - Priorizar datos numéricos específicos cuando estén disponibles
+        - Incluir fechas de publicación de la información
+        - Verificar que todos los enlaces funcionen correctamente
 
         INFORMACIÓN PARA EL ANÁLISIS:
 
