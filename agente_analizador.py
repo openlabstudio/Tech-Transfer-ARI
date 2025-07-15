@@ -10,6 +10,7 @@ from tavily import TavilyClient
 import json
 from dotenv import load_dotenv
 
+
 # Configuración de APIs usando variables de entorno
 def get_api_keys():
     """Obtiene las claves API desde las variables de entorno"""
